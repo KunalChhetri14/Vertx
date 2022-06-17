@@ -1,31 +1,42 @@
 package com.example.starter;
 
-import com.sun.org.slf4j.internal.*;
+import org.apache.logging.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
 import io.vertx.core.AbstractVerticle;
 import io.vertx.core.Promise;
 
 import io.vertx.core.Vertx;
 import io.vertx.core.net.NetSocket;
-public class MainVerticle {
-  private final Logger logger = LoggerFactory.getLogger(MainVerticle.class);
+public class MainVerticle extends AbstractVerticle {
+  private final Logger logger = LogManager.getLogger(MainVerticle.class);
   private static int numberOfConnections = 0;
-  private static int noOfClient = 0;
+  private long counter = 1;
+
+  @Override
+  public void start() throws Exception {
+    vertx.setPeriodic(5000, count -> {
+      logger.info("tick");
+    });
+    vertx.createHttpServer()
+            .requestHandler(req -> {
+              logger.info("Request #{} from {}", counter++,
+                      req.remoteAddress().host());
+              req.response().end("Hello!");
+            })
+            .listen(8080);
+    logger.info("Open http://localhost:8080/");
+  }
+
   public static void main(String[] args) {
     Vertx vertx = Vertx.vertx();
-    vertx.createNetServer()
-      .connectHandler(MainVerticle::handleNewClient)
-      .listen(3000);
-//    vertx.setPeriodic(5000, id -> System.out.println(howMany()));
-    vertx.createHttpServer()
-      .requestHandler(request -> request.response().end(howMany(noOfClient++)))
-      .listen(8080);
+    vertx.deployVerticle(new MainVerticle());
   }
+
   private static void handleNewClient(NetSocket socket) {
     numberOfConnections++;
-    noOfClient++;
     for(int i =0 ; i< 10000000; i++) {
       i = i + 1;
-      System.out.println("inside loop " + i + " and server is " + noOfClient);
+//      System.out.println("inside loop " + i + " and server is " + noOfClient);
     }
     socket.handler(buffer -> {
       socket.write(buffer);
