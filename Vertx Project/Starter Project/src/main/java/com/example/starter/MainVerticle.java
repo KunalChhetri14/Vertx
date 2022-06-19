@@ -13,7 +13,7 @@ public class MainVerticle extends AbstractVerticle {
   private long counter = 1;
 
   @Override
-  public void start() throws Exception {
+  public void start(Promise<Void> promise) throws Exception {
     vertx.setPeriodic(5000, count -> {
       logger.info("tick");
     });
@@ -23,7 +23,13 @@ public class MainVerticle extends AbstractVerticle {
                       req.remoteAddress().host());
               req.response().end("Hello!");
             })
-            .listen(8080);
+            .listen(8080, arr -> {
+              if(arr.succeeded()) {
+                promise.complete();
+              } else {
+                promise.fail(arr.cause());
+              }
+            });
     logger.info("Open http://localhost:8080/");
   }
 
