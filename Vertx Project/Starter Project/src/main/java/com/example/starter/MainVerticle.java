@@ -1,11 +1,10 @@
 package com.example.starter;
 
+import io.vertx.core.*;
+import io.vertx.core.json.*;
 import org.apache.logging.log4j.Logger;
 import org.apache.logging.log4j.LogManager;
-import io.vertx.core.AbstractVerticle;
-import io.vertx.core.Promise;
 
-import io.vertx.core.Vertx;
 import io.vertx.core.net.NetSocket;
 public class MainVerticle extends AbstractVerticle {
   private final Logger logger = LogManager.getLogger(MainVerticle.class);
@@ -15,7 +14,15 @@ public class MainVerticle extends AbstractVerticle {
   @Override
   public void start(Promise<Void> promise) throws Exception {
     vertx.setPeriodic(5000, count -> {
-      logger.info("tick");
+      try {
+        logger.info("Zzz...");
+        Thread.sleep(8000);
+        logger.info("Up!");
+      } catch(InterruptedException e) {
+        logger.error("Oops",e);
+      }
+//      logger.info("tick");
+//      logger.info("n = {}", config().getInteger("n", -1));
     });
     vertx.createHttpServer()
             .requestHandler(req -> {
@@ -35,7 +42,19 @@ public class MainVerticle extends AbstractVerticle {
 
   public static void main(String[] args) {
     Vertx vertx = Vertx.vertx();
-    vertx.deployVerticle(new MainVerticle());
+    DeploymentOptions opts = new DeploymentOptions()
+//      .setConfig(conf)
+      .setWorker(true)
+      .setInstances(2);
+    vertx.deployVerticle("com.example.starter.MainVerticle",opts);
+//    for(int n=0;n<4;n++) {
+//      JsonObject conf = new JsonObject().put("n",n);
+//      DeploymentOptions opts = new DeploymentOptions()
+//        .setConfig(conf)
+//        .setInstances(n);
+//      vertx.deployVerticle("com.example.starter.MainVerticle",opts);
+//    }
+//    vertx.deployVerticle(new MainVerticle());
   }
 
   private static void handleNewClient(NetSocket socket) {
